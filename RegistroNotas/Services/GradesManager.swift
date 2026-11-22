@@ -14,7 +14,6 @@ final class GradesManager: ObservableObject {
         stopListening()
         listener = database.collection("grades")
             .whereField("teacherId", isEqualTo: teacherId)
-            .order(by: "createdAt", descending: false)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self else { return }
                 if let error {
@@ -23,9 +22,9 @@ final class GradesManager: ObservableObject {
                     }
                     return
                 }
-                let grades = snapshot?.documents.compactMap {
+                let grades = (snapshot?.documents.compactMap {
                     try? $0.data(as: Grade.self)
-                } ?? []
+                } ?? []).sorted { $0.createdAt < $1.createdAt }
                 Task { @MainActor in
                     self.grades = grades
                     self.errorMessage = nil
